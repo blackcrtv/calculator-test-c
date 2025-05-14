@@ -1,0 +1,38 @@
+# Visual Studio Code
+.vscode/
+*.code-workspace
+
+# Compiled files
+*.exe
+*.obj
+*.o
+*.out
+*.app
+
+# Debug files
+*.dSYM/
+*.su
+*.idb
+*.pdb
+
+# Build directories
+build/
+Debug/
+Release/
+x64/
+x86/
+
+# Dependencies
+*.dll
+*.lib
+*.a
+*.so
+*.dylib
+
+# IDE specific files
+*.swp
+*.swo
+*~
+
+# Keep all .txt files
+!*.txt 

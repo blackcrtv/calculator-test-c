@@ -1,0 +1,26 @@
+Informatii nutritive pentru fiecare masa:
+------------------------------
+Masa: omleta cu cartofi
+Calorii: 77.0 kcal
+Carbohidrati: 17.0 g
+Proteine: 2.0 g
+Fibre: 2.2 g
+------------------------------
+Masa: paste cu sos de rosii si parmezan
+Calorii: 22.0 kcal
+Carbohidrati: 4.8 g
+Proteine: 1.1 g
+Fibre: 1.2 g
+------------------------------
+Masa: pui cu orez
+Calorii: 295.0 kcal
+Carbohidrati: 28.0 g
+Proteine: 34.0 g
+Fibre: 0.4 g
+------------------------------
+Masa: salata cu ton
+Calorii: 159.0 kcal
+Carbohidrati: 2.9 g
+Proteine: 24.8 g
+Fibre: 1.6 g
+------------------------------
