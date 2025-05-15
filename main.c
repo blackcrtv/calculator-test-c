@@ -317,6 +317,69 @@ float gasesteMaxCalorii() {
     return max;
 }
 
+// Structură pentru evaluarea sănătății unei mese
+struct EvaluareSanatate {
+    int esteSanatoasa;
+    float scorSanatate;  // 0-100, unde 100 este cel mai sănătos
+};
+
+// Funcție pentru evaluarea sănătății unei mese
+struct EvaluareSanatate evalueazaSanatateMasa(struct InformatiiNutritive info) {
+    struct EvaluareSanatate evaluare = {0, 0};
+    
+    // Verifică dacă masa are mai puțin de 1000 kcal
+    if (info.calorii > 1000) {
+        evaluare.esteSanatoasa = 0;
+        evaluare.scorSanatate = 0;
+        return evaluare;
+    }
+    
+    // Calculează scorul de sănătate bazat pe balanța nutrienților
+    float scorCalorii = 100 - (info.calorii / 1000.0f * 100);  // Mai puține calorii = mai bine
+    
+    // Verifică prezența nutrienților
+    float scorNutrienti = 0;
+    if (info.proteine > 0) scorNutrienti += 25;
+    if (info.carbohidrati > 0) scorNutrienti += 25;
+    if (info.fibre > 0) scorNutrienti += 25;
+    
+    // Verifică balanța nutrienților (nu prea mult dintr-un singur tip)
+    float totalNutrienti = info.proteine + info.carbohidrati + info.fibre;
+    float balantaNutrienti = 100;
+    if (totalNutrienti > 0) {
+        float procentProteine = (info.proteine / totalNutrienti) * 100;
+        float procentCarbohidrati = (info.carbohidrati / totalNutrienti) * 100;
+        float procentFibre = (info.fibre / totalNutrienti) * 100;
+        
+        // Penalizează dacă un nutrient este prea dominant (>70%)
+        if (procentProteine > 70 || procentCarbohidrati > 70 || procentFibre > 70) {
+            balantaNutrienti = 50;
+        }
+    }
+    
+    // Calculează scorul final
+    evaluare.scorSanatate = (scorCalorii * 0.4f) + (scorNutrienti * 0.3f) + (balantaNutrienti * 0.3f);
+    evaluare.esteSanatoasa = (evaluare.scorSanatate >= 60);  // Consideră sănătos dacă scorul este >= 60
+    
+    return evaluare;
+}
+
+// Funcție pentru obținerea culorii în funcție de sănătatea mesei
+void obtineCuloareMasa(struct EvaluareSanatate evaluare, float* r, float* g, float* b) {
+    if (evaluare.esteSanatoasa) {
+        // Verde pentru mese sănătoase, cu nuanțe diferite în funcție de scor
+        *r = 0.0f;
+        *g = 0.5f + (evaluare.scorSanatate / 200.0f);  // Verde mai deschis pentru scoruri mai mari
+        *b = 0.0f;
+    } else {
+        // Roșu pentru mese nesănătoase, cu nuanțe diferite în funcție de scor
+        *r = 0.5f + (evaluare.scorSanatate / 200.0f);  // Roșu mai închis pentru scoruri mai mici
+        *g = 0.0f;
+        *b = 0.0f;
+    }
+}
+
+// Modifică funcția display pentru a include culorile bazate pe sănătate
 void display() {
     glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
@@ -327,8 +390,18 @@ void display() {
 
     // Draw bars
     for (int i = 0; i < numarMeseChart; i++) {
+        // Calculează informațiile nutritive pentru masa curentă
+        struct InformatiiNutritive info = calculeazaInformatiiNutritive(numeMese[i], aliments, numarAliments);
+        
+        // Evaluează sănătatea mesei
+        struct EvaluareSanatate evaluare = evalueazaSanatateMasa(info);
+        
+        // Obține culoarea pentru bară
+        float r, g, b;
+        obtineCuloareMasa(evaluare, &r, &g, &b);
+        
         glBegin(GL_QUADS);
-        glColor3f(0.0f, i/(float)numarMeseChart, 1.0f);
+        glColor3f(r, g, b);
         glVertex2f(-0.9f + i * barWidth, -0.9f);
         glVertex2f(-0.9f + (i + 1) * barWidth, -0.9f);
         glVertex2f(-0.9f + (i + 1) * barWidth, -0.9f + caloriiMese[i] * scale);
@@ -350,6 +423,13 @@ void display() {
     char* title = "Calorii per masa";
     for (int i = 0; title[i] != '\0'; i++) {
         glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, title[i]);
+    }
+
+    // Adaugă legendă pentru culori
+    glRasterPos2f(-0.8f, -0.95f);
+    char* legend = "Verde = Masa Sanatoasa, Rosu = Masa Nesanatoasa";
+    for (int i = 0; legend[i] != '\0'; i++) {
+        glutBitmapCharacter(GLUT_BITMAP_HELVETICA_12, legend[i]);
     }
 
     glFlush();
