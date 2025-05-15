@@ -214,6 +214,47 @@ struct Aliment {
 ```
 Reprezintă un aliment cu numele și informațiile sale nutritive.
 
+### `struct EvaluareSanatate`
+```c
+struct EvaluareSanatate {
+    int esteSanatoasa;
+    float scorSanatate;  // 0-100, unde 100 este cel mai sănătos
+};
+```
+Structură pentru stocarea evaluării sănătății unei mese.
+
+### `evalueazaSanatateMasa(struct InformatiiNutritive info)`
+**Scop**: Evaluează sănătatea unei mese bazată pe conținutul său nutrițional.
+**Parametri**:
+- `info`: struct InformatiiNutritive - informațiile nutritive ale mesei
+**Return**: struct EvaluareSanatate cu rezultatul evaluării
+**Logică de evaluare**:
+1. **Verificare Calorii** (40% din scor):
+   - Mese peste 1000 kcal sunt considerate nesănătoase
+   - Scorul scade proporțional cu numărul de calorii
+
+2. **Prezența Nutrienților** (30% din scor):
+   - Verifică prezența proteinelor (+25%)
+   - Verifică prezența carbohidraților (+25%)
+   - Verifică prezența fibrelor (+25%)
+
+3. **Balanța Nutrienților** (30% din scor):
+   - Penalizează mesele cu un nutrient dominant (>70%)
+   - Promovează mesele cu distribuție echilibrată
+
+**Linie cheie**: `evaluare.scorSanatate = (scorCalorii * 0.4f) + (scorNutrienti * 0.3f) + (balantaNutrienti * 0.3f);`
+
+### `obtineCuloareMasa(struct EvaluareSanatate evaluare, float* r, float* g, float* b)`
+**Scop**: Generează culoarea corespunzătoare pentru afișarea mesei în grafic.
+**Parametri**:
+- `evaluare`: struct EvaluareSanatate - rezultatul evaluării
+- `r, g, b`: float* - pointeri către componentele de culoare
+**Logică**:
+- Verde pentru mese sănătoase (scor >= 60)
+- Roșu pentru mese nesănătoase (scor < 60)
+- Intensitatea culorii variază cu scorul
+**Linie cheie**: `*g = 0.5f + (evaluare.scorSanatate / 200.0f);`
+
 ## Constante Importante
 - `MAX_LUNGIME_LINIE`: 100 - Lungimea maximă a unei linii din fișier
 - `MAX_LUNGIME_NUME`: 50 - Lungimea maximă a unui nume de aliment
@@ -395,3 +436,71 @@ Reprezintă un aliment cu numele și informațiile sale nutritive.
    - Nu include caloriile în distribuție
    - Presupune că toate mesele au aceeași importanță
    - Nu ia în considerare cantitățile diferite de alimente 
+
+## Sistemul de Evaluare a Sănătății
+
+### Scop
+Sistemul de evaluare a sănătății oferă o metodă vizuală și intuitivă pentru a analiza calitatea nutrițională a meselor. Acesta transformă datele nutriționale complexe într-un format ușor de înțeles prin intermediul culorilor.
+
+### Componente Principale
+
+1. **Evaluarea Caloriilor**
+   - Limita maximă: 1000 kcal
+   - Scor proporțional cu numărul de calorii
+   - Impact major asupra evaluării finale (40%)
+
+2. **Diversitatea Nutrienților**
+   - Verifică prezența tuturor tipurilor de nutrienți
+   - Recompensează mesele complete
+   - Contribuție moderată la scor (30%)
+
+3. **Balanța Nutrienților**
+   - Analizează distribuția nutrienților
+   - Penalizează dominanța unui singur nutrient
+   - Contribuție moderată la scor (30%)
+
+### Vizualizare
+
+1. **Sistem de Culori**
+   - Verde: Mese sănătoase (scor >= 60)
+   - Roșu: Mese nesănătoase (scor < 60)
+   - Nuanțe: Intensitatea culorii reflectă scorul
+
+2. **Legendă**
+   - Explică semnificația culorilor
+   - Ajută la interpretarea graficului
+   - Poziționată sub grafic
+
+### Avantaje
+
+1. **Feedback Vizual Imediat**
+   - Identificare rapidă a meselor problematice
+   - Înțelegere intuitivă a calității nutriționale
+   - Ajutor în luarea deciziilor alimentare
+
+2. **Evaluare Complexă**
+   - Consideră multiple aspecte nutriționale
+   - Balansează diferite factori
+   - Oferă o perspectivă de ansamblu
+
+3. **Flexibilitate**
+   - Ușor de ajustat parametrii
+   - Poate fi extins pentru criterii suplimentare
+   - Adaptabil la diferite nevoi nutriționale
+
+### Limitări
+
+1. **Simplificare**
+   - Nu ia în considerare toate aspectele nutriționale
+   - Generalizează anumite aspecte
+   - Poate necesita ajustări pentru cazuri speciale
+
+2. **Subiectivitate**
+   - Criteriile sunt definite arbitrar
+   - Poate necesita personalizare
+   - Nu înlocuiește sfatul nutriționistului
+
+3. **Complexitate Calcul**
+   - Necesită procesare suplimentară
+   - Poate afecta performanța
+   - Requeră memorie suplimentară 
