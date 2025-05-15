@@ -365,6 +365,121 @@ void cleanup() {
     }
 }
 
+// Global variables for pie chart
+float totalProteine = 0;
+float totalCarbohidrati = 0;
+float totalFibre = 0;
+
+// Function to calculate total nutrients for pie chart
+void calculeazaTotalNutritii(char mese[][MAX_LUNGIME_NUME], int numarMese, struct Aliment* aliments, int numarAliments) {
+    totalProteine = 0;
+    totalCarbohidrati = 0;
+    totalFibre = 0;
+    
+    for (int i = 0; i < numarMese; i++) {
+        struct InformatiiNutritive info = calculeazaInformatiiNutritive(mese[i], aliments, numarAliments);
+        totalProteine += info.proteine;
+        totalCarbohidrati += info.carbohidrati;
+        totalFibre += info.fibre;
+    }
+}
+
+// Function to draw pie chart
+void deseneazaPieChart() {
+    glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    float total = totalProteine + totalCarbohidrati + totalFibre;
+    if (total == 0) return;
+
+    float startAngle = 0;
+    float radius = 0.4f;
+    float centerX = 0.0f;
+    float centerY = 0.0f;
+
+    // Draw protein slice
+    glBegin(GL_TRIANGLE_FAN);
+    glColor3f(1.0f, 0.0f, 0.0f); // Red for protein
+    glVertex2f(centerX, centerY);
+    float endAngle = startAngle + (totalProteine / total) * 360.0f;
+    for (float angle = startAngle; angle <= endAngle; angle += 1.0f) {
+        float radian = angle * 3.14159f / 180.0f;
+        glVertex2f(centerX + radius * cos(radian), centerY + radius * sin(radian));
+    }
+    glEnd();
+    startAngle = endAngle;
+
+    // Draw carbs slice
+    glBegin(GL_TRIANGLE_FAN);
+    glColor3f(0.0f, 1.0f, 0.0f); // Green for carbs
+    glVertex2f(centerX, centerY);
+    endAngle = startAngle + (totalCarbohidrati / total) * 360.0f;
+    for (float angle = startAngle; angle <= endAngle; angle += 1.0f) {
+        float radian = angle * 3.14159f / 180.0f;
+        glVertex2f(centerX + radius * cos(radian), centerY + radius * sin(radian));
+    }
+    glEnd();
+    startAngle = endAngle;
+
+    // Draw fiber slice
+    glBegin(GL_TRIANGLE_FAN);
+    glColor3f(0.0f, 0.0f, 1.0f); // Blue for fiber
+    glVertex2f(centerX, centerY);
+    endAngle = startAngle + (totalFibre / total) * 360.0f;
+    for (float angle = startAngle; angle <= endAngle; angle += 1.0f) {
+        float radian = angle * 3.14159f / 180.0f;
+        glVertex2f(centerX + radius * cos(radian), centerY + radius * sin(radian));
+    }
+    glEnd();
+
+    // Draw legend
+    glColor3f(0.0f, 0.0f, 0.0f);
+    glRasterPos2f(-0.8f, 0.8f);
+    char* title = "Distributia Nutritiilor";
+    for (int i = 0; title[i] != '\0'; i++) {
+        glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, title[i]);
+    }
+
+    // Draw legend items
+    char buffer[100];
+    float yPos = 0.6f;
+    float yStep = 0.1f;
+
+    // Protein
+    glColor3f(1.0f, 0.0f, 0.0f);
+    glRasterPos2f(-0.8f, yPos);
+    sprintf(buffer, "Proteine: %.1f%%", (totalProteine / total) * 100);
+    for (int i = 0; buffer[i] != '\0'; i++) {
+        glutBitmapCharacter(GLUT_BITMAP_HELVETICA_12, buffer[i]);
+    }
+
+    // Carbs
+    glColor3f(0.0f, 1.0f, 0.0f);
+    glRasterPos2f(-0.8f, yPos - yStep);
+    sprintf(buffer, "Carbohidrati: %.1f%%", (totalCarbohidrati / total) * 100);
+    for (int i = 0; buffer[i] != '\0'; i++) {
+        glutBitmapCharacter(GLUT_BITMAP_HELVETICA_12, buffer[i]);
+    }
+
+    // Fiber
+    glColor3f(0.0f, 0.0f, 1.0f);
+    glRasterPos2f(-0.8f, yPos - 2 * yStep);
+    sprintf(buffer, "Fibre: %.1f%%", (totalFibre / total) * 100);
+    for (int i = 0; buffer[i] != '\0'; i++) {
+        glutBitmapCharacter(GLUT_BITMAP_HELVETICA_12, buffer[i]);
+    }
+
+    glFlush();
+}
+
+// Function to create a new window for pie chart
+void creeazaFereastraPieChart() {
+    glutInitWindowSize(800, 600);
+    glutInitWindowPosition(900, 50);  // Position it to the right of the main window
+    glutCreateWindow("Distributia Nutritiilor");
+    glutDisplayFunc(deseneazaPieChart);
+}
+
 int main(int argc, char** argv) {
     struct Aliment aliments[MAX_ALIMENTE];
     int numarAliments = 0;
@@ -390,12 +505,21 @@ int main(int argc, char** argv) {
     // Prepare chart data
     pregatesteDateChart(mese, numarMese, aliments, numarAliments);
 
+    // Calculate total nutrients for pie chart
+    calculeazaTotalNutritii(mese, numarMese, aliments, numarAliments);
+
     // Initialize GLUT
     glutInit(&argc, argv);
+    
+    // Create main window for bar chart
     glutInitWindowSize(800, 600);
     glutInitWindowPosition(50, 50);
     glutCreateWindow("Calorii per masa");
     glutDisplayFunc(display);
+    
+    // Create second window for pie chart
+    creeazaFereastraPieChart();
+    
     glutMainLoop();
 
     // Cleanup

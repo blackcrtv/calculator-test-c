@@ -160,6 +160,38 @@ Programul va procesa doar: `ou`, `paine`, `lapte`
 - Afișează valorile caloriilor deasupra barelor
 **Linie cheie**: `glVertex2f(-0.9f + i * barWidth, -0.9f + caloriiMese[i] * scale);`
 
+### `calculeazaTotalNutritii(char mese[][MAX_LUNGIME_NUME], int numarMese, struct Aliment* aliments, int numarAliments)`
+**Scop**: Calculează totalul nutrienților (proteine, carbohidrați, fibre) pentru toate mesele.
+**Parametri**:
+- `mese`: char[][] - lista de mese
+- `numarMese`: int - numărul de mese
+- `aliments`: struct Aliment* - lista de alimente disponibile
+- `numarAliments`: int - numărul de alimente disponibile
+**Logică**: 
+- Calculează suma totală pentru fiecare tip de nutrient
+- Stochează rezultatele în variabilele globale pentru pie chart
+**Linie cheie**: `totalProteine += info.proteine;`
+
+### `deseneazaPieChart()`
+**Scop**: Funcție OpenGL pentru desenarea graficului circular cu distribuția nutrienților.
+**Logică**: 
+- Desenează un grafic circular (pie chart) cu trei secțiuni
+- Fiecare secțiune reprezintă proporția unui nutrient (proteine, carbohidrați, fibre)
+- Afișează un legend cu procentele exacte
+**Culori**:
+- Roșu pentru proteine
+- Verde pentru carbohidrați
+- Albastru pentru fibre
+**Linie cheie**: `endAngle = startAngle + (totalProteine / total) * 360.0f;`
+
+### `creeazaFereastraPieChart()`
+**Scop**: Creează o fereastră separată pentru afișarea graficului circular.
+**Logică**: 
+- Inițializează o nouă fereastră GLUT
+- Poziționează fereastra la dreapta ferestrei principale
+- Setează funcția de desenare pentru pie chart
+**Linie cheie**: `glutCreateWindow("Distributia Nutritiilor");`
+
 ## Structuri de Date
 
 ### `struct InformatiiNutritive`
@@ -221,3 +253,145 @@ Reprezintă un aliment cu numele și informațiile sale nutritive.
   - Prevenirea memory leaks
   - Returnarea memoriei sistemului
   - Curățarea resurselor la încheierea programului 
+
+## Diferențe între Grafice
+
+### Graficul cu Bare (Original)
+- **Scop**: Afișează caloriile pentru fiecare masă individuală
+- **Date necesare**: Calorii per masă
+- **Utilizare**: Pentru a compara conținutul caloric între mese diferite
+- **Vizualizare**: Bare verticale, fiecare reprezentând o masă
+- **Perspectivă**: Oferă o vedere detaliată a fiecărei mese
+- **Implementare tehnică**:
+  - Folosește primitive simple OpenGL (GL_QUADS)
+  - Desenează manual fiecare bară ca un dreptunghi
+  - Calculează manual pozițiile și dimensiunile barelor
+  - Implementare directă a scalării și poziționării
+  - Nu necesită calcule trigonometrice
+  - Folosește un singur tip de primitivă grafică
+
+### Graficul Circular (Nou)
+- **Scop**: Afișează distribuția procentuală a nutrienților în toate mesele
+- **Date necesare**: Total proteine, carbohidrați și fibre
+- **Utilizare**: Pentru a înțelege balanța generală a nutrienților în dieta completă
+- **Vizualizare**: Cercul împărțit în trei secțiuni proporționale
+- **Perspectivă**: Oferă o vedere de ansamblu a compoziției nutriționale
+- **Implementare tehnică**:
+  - Folosește primitive complexe OpenGL (GL_TRIANGLE_FAN)
+  - Aproximare a cercului prin triunghiuri
+  - Calcule trigonometrice pentru generarea punctelor
+  - Implementare matematică a secțiunilor circulare
+  - Folosește funcții trigonometrice (sin, cos) pentru calculul coordonatelor
+  - Necesită gestionarea unghiurilor și a radianilor
+  - Implementare mai sofisticată a culorilor și transparenței
+  - Folosește mai multe tipuri de primitive grafice pentru legendă și text
+
+### Diferențe în Implementare
+1. **Complexitate a Codului**:
+   - Bar Chart: 
+     - Implementare manuală a fiecărei bare
+     - Calcule directe pentru poziționare și scalare
+     - Cod repetitiv pentru fiecare bară
+     - Necesită gestionare manuală a spațiului
+   - Pie Chart:
+     - Implementare modulară cu funcții separate
+     - Reutilizare a codului pentru fiecare secțiune
+     - Calcule automate pentru proporții
+     - Gestionare centralizată a desenării
+
+2. **Structura Implementării**:
+   - Bar Chart:
+     - Toată logica într-o singură funcție (display)
+     - Gestionare manuală a datelor
+     - Scalare manuală pentru fiecare bară
+     - Poziționare explicită a textului
+   - Pie Chart:
+     - Funcții separate pentru calcul și desenare
+     - Variabile globale pentru stocarea datelor
+     - Scalare automată bazată pe procente
+     - Sistem de legendă integrat
+
+3. **Gestionarea Datelor**:
+   - Bar Chart:
+     - Date stocate în array-uri separate
+     - Necesită alocare dinamică de memorie
+     - Gestionare manuală a eliberării memoriei
+     - Recalculare la fiecare desenare
+   - Pie Chart:
+     - Date calculate o singură dată la inițializare
+     - Stocare simplă în variabile globale
+     - Nu necesită alocare dinamică
+     - Reutilizare a calculelor
+
+4. **Extensibilitate**:
+   - Bar Chart:
+     - Modificări necesare pentru fiecare element nou
+     - Limitări în adăugarea de funcționalități
+     - Cod mai greu de întreținut
+     - Schimbări necesare pentru fiecare ajustare
+   - Pie Chart:
+     - Ușor de extins cu noi tipuri de nutrienți
+     - Adăugare simplă de noi funcționalități
+     - Cod mai ușor de întreținut
+     - Ajustări automate la modificări
+
+5. **Performanță**:
+   - Bar Chart:
+     - Calcule repetate la fiecare frame
+     - Mai multe operații de desenare
+     - Gestionare manuală a resurselor
+     - Overhead pentru fiecare element
+   - Pie Chart:
+     - Calcule o singură dată la inițializare
+     - Operații de desenare optimizate
+     - Gestionare simplificată a resurselor
+     - Performanță constantă indiferent de date
+
+6. **Mentenabilitate**:
+   - Bar Chart:
+     - Cod mai lung și mai complex
+     - Modificări necesare în mai multe locuri
+     - Testare mai dificilă
+     - Debugging mai complicat
+   - Pie Chart:
+     - Cod mai scurt și mai organizat
+     - Modificări localizate
+     - Testare mai ușoară
+     - Debugging simplificat
+
+## Funcționalități Principale ale Pie Chart-ului
+
+1. **Calculul Totalurilor**
+   - Insumarea tuturor nutrienților din toate mesele
+   - Calculul procentajelor pentru fiecare tip de nutrient
+
+2. **Vizualizare Interactivă**
+   - Legendă cu procentaje exacte
+   - Culori distincte pentru fiecare tip de nutrient
+
+3. **Integrare cu Sistemul Existent**
+   - Funcționează în paralel cu graficul de bare
+   - Folosește aceleași date de intrare
+   - Oferă o perspectivă complementară asupra datelor
+
+4. **Personalizare Vizuală**
+   - Culori intuitive pentru fiecare nutrient
+   - Titlu descriptiv
+   - Legendă clară și ușor de citit
+
+## Note de Utilizare
+
+1. **Date Necesare**
+   - Fișierul `nutrition.txt` cu informații despre alimente
+   - Fișierul `mese.txt` cu lista de mese
+   - Toate alimentele trebuie să aibă valori pentru proteine, carbohidrați și fibre
+
+2. **Interpretarea Rezultatelor**
+   - Procentajele arată distribuția relativă a nutrienților
+   - Suma tuturor procentajelor este 100%
+   - Valorile sunt calculate din totalul absolut al fiecărui nutrient
+
+3. **Limitări**
+   - Nu include caloriile în distribuție
+   - Presupune că toate mesele au aceeași importanță
+   - Nu ia în considerare cantitățile diferite de alimente 
