@@ -11,7 +11,6 @@
 #define MAX_ALIMENTE 100
 #define MAX_MESE 50
 #define MAX_ALIMENTE_PER_MASA 30
-#define MAX_CUVINTE_IGNORATE 20
 
 // Variabile globale necesare pentru display
 struct Aliment* aliments = NULL;  // Variabilă globală pentru alimente
@@ -82,23 +81,23 @@ int citesteAlimente(const char* numeFisier, struct Aliment* aliments, int* numar
 
     while (fgets(linie, sizeof(linie), fisier) && *numarAliments < MAX_ALIMENTE) {
         lineCount++;
-        // Remove newline and trailing spaces
+        // Elimină newline și spațiile de la sfârșit
         char* end = linie + strlen(linie) - 1;
         while (end >= linie && (*end == '\n' || *end == ' ' || *end == '\r')) {
             *end = '\0';
             end--;
         }
         if (strlen(linie) == 0) {
-            continue;  // Skip empty lines
+            continue;  // Sari peste liniile goale
         }
         
-        // Initialize all values to 0
+        // Inițializează toate valorile la 0
         aliments[*numarAliments].info.calorii = 0;
         aliments[*numarAliments].info.carbohidrati = 0;
         aliments[*numarAliments].info.proteine = 0;
         aliments[*numarAliments].info.fibre = 0;
         
-        // Read the name first
+        // Citește numele mai întâi
         char* nume = strtok(linie, ",");
         if (nume == NULL) continue;
         
@@ -106,7 +105,7 @@ int citesteAlimente(const char* numeFisier, struct Aliment* aliments, int* numar
         aliments[*numarAliments].nume[MAX_LUNGIME_NUME - 1] = '\0';
         sanitizeazaNume(aliments[*numarAliments].nume);
         
-        // Read the values
+        // Citește valorile
         char* val = strtok(NULL, ",");
         if (val != NULL) aliments[*numarAliments].info.calorii = atof(val);
         
@@ -126,7 +125,7 @@ int citesteAlimente(const char* numeFisier, struct Aliment* aliments, int* numar
     return 1;
 }
 
-// Citeste numele meselor din fisier
+// Citește numele meselor din fișier
 int citesteMese(const char* numeFisier, char mese[][MAX_LUNGIME_NUME], int* numarMese) {
     FILE *fisier = fopen(numeFisier, "r");
     if (fisier == NULL) {
@@ -221,15 +220,15 @@ struct InformatiiNutritive calculeazaInformatiiNutritive(const char* masa, struc
     int nrCuvinte = 0;
     char* token = strtok(copie, " ");
     while (token != NULL && nrCuvinte < MAX_ALIMENTE_PER_MASA) {
+        if (esteCuvantDeIgnorat(token)) {
+            continue;
+        }
         cuvinte[nrCuvinte++] = token;
         token = strtok(NULL, " ");
     }
 
     int ingredientGasit = 0;
     for (int i = 0; i < nrCuvinte; i++) {
-        if (esteCuvantDeIgnorat(cuvinte[i])) {
-            continue;
-        }
         char posibilAliment[MAX_LUNGIME_NUME];
         strncpy(posibilAliment, cuvinte[i], MAX_LUNGIME_NUME - 1);
         posibilAliment[MAX_LUNGIME_NUME - 1] = '\0';
@@ -273,7 +272,7 @@ void sorteazaMeseAlfabetic(char mese[][MAX_LUNGIME_NUME], int numarMese) {
     }
 }
 
-// Add function to write nutritional info to a file
+// Funcție pentru scrierea informațiilor nutritive în fișier
 void scrieInformatiiMeseInFisier(const char* numeFisier, char mese[][MAX_LUNGIME_NUME], int numarMese, struct Aliment* aliments, int numarAliments) {
     FILE* fout = fopen(numeFisier, "w");
     if (!fout) {
@@ -284,6 +283,13 @@ void scrieInformatiiMeseInFisier(const char* numeFisier, char mese[][MAX_LUNGIME
     fprintf(fout, "------------------------------\n");
     for (int i = 0; i < numarMese; i++) {
         struct InformatiiNutritive info = calculeazaInformatiiNutritive(mese[i], aliments, numarAliments);
+        
+        // Verifică dacă toate valorile nutritive sunt 0.0
+        if (info.calorii == 0.0f && info.carbohidrati == 0.0f && 
+            info.proteine == 0.0f && info.fibre == 0.0f) {
+            continue;  // Sari peste această masă
+        }
+        
         fprintf(fout, "Masa: %s\n", mese[i]);
         fprintf(fout, "Calorii: %.1f kcal\n", info.calorii);
         fprintf(fout, "Carbohidrati: %.1f g\n", info.carbohidrati);
@@ -294,12 +300,12 @@ void scrieInformatiiMeseInFisier(const char* numeFisier, char mese[][MAX_LUNGIME
     fclose(fout);
 }
 
-// Global variables for chart data
+// Variabile globale pentru datele graficului
 float* caloriiMese = NULL;
 char** numeMese = NULL;
 int numarMeseChart = 0;
 
-// Function to prepare chart data
+// Funcție pentru pregătirea datelor graficului
 void pregatesteDateChart(char mese[][MAX_LUNGIME_NUME], int numarMese, struct Aliment* aliments, int numarAliments) {
     caloriiMese = (float*)malloc(numarMese * sizeof(float));
     numeMese = (char**)malloc(numarMese * sizeof(char*));
@@ -312,7 +318,7 @@ void pregatesteDateChart(char mese[][MAX_LUNGIME_NUME], int numarMese, struct Al
     }
 }
 
-// Function to find maximum calories for scaling
+// Funcție pentru găsirea caloriilor maxime pentru scalare
 float gasesteMaxCalorii() {
     float max = 0;
     for (int i = 0; i < numarMeseChart; i++) {
@@ -389,10 +395,10 @@ void display(struct Aliment* aliments, int numarAliments) {
     glClear(GL_COLOR_BUFFER_BIT);
 
     float maxCalorii = gasesteMaxCalorii();
-    float scale = 0.8f / maxCalorii;  // Scale to fit in window
+    float scale = 0.8f / maxCalorii;  // Scalare pentru a se încadra în fereastră
     float barWidth = 0.8f / numarMeseChart;
 
-    // Draw bars
+    // Desenează barele
     for (int i = 0; i < numarMeseChart; i++) {
         // Calculează informațiile nutritive pentru masa curentă
         struct InformatiiNutritive info = calculeazaInformatiiNutritive(numeMese[i], aliments, numarAliments);
@@ -412,7 +418,7 @@ void display(struct Aliment* aliments, int numarAliments) {
         glVertex2f(-0.9f + i * barWidth, -0.9f + caloriiMese[i] * scale);
         glEnd();
 
-        // Display calories value
+        // Afișează valoarea caloriilor
         char buffer[20];
         sprintf(buffer, "%.0f", caloriiMese[i]);
         glRasterPos2f(-0.9f + i * barWidth + barWidth/4, -0.9f + caloriiMese[i] * scale + 0.05f);
@@ -421,7 +427,7 @@ void display(struct Aliment* aliments, int numarAliments) {
         }
     }
 
-    // Draw title
+    // Desenează titlul
     glColor3f(0.0f, 0.0f, 0.0f);
     glRasterPos2f(-0.3f, 0.9f);
     char* title = "Calorii per masa";
@@ -454,12 +460,12 @@ void cleanup() {
     }
 }
 
-// Global variables for pie chart
+// Variabile globale pentru graficul circular
 float totalProteine = 0;
 float totalCarbohidrati = 0;
 float totalFibre = 0;
 
-// Function to calculate total nutrients for pie chart
+// Funcție pentru calcularea nutrienților totali pentru graficul circular
 void calculeazaTotalNutritii(char mese[][MAX_LUNGIME_NUME], int numarMese, struct Aliment* aliments, int numarAliments) {
     totalProteine = 0;
     totalCarbohidrati = 0;
@@ -473,7 +479,7 @@ void calculeazaTotalNutritii(char mese[][MAX_LUNGIME_NUME], int numarMese, struc
     }
 }
 
-// Function to draw pie chart
+// Funcție pentru desenarea graficului circular
 void deseneazaPieChart() {
     glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
@@ -486,9 +492,9 @@ void deseneazaPieChart() {
     float centerX = 0.0f;
     float centerY = 0.0f;
 
-    // Draw protein slice
+    // Desenează secțiunea pentru proteine
     glBegin(GL_TRIANGLE_FAN);
-    glColor3f(1.0f, 0.0f, 0.0f); // Red for protein
+    glColor3f(1.0f, 0.0f, 0.0f); // Roșu pentru proteine
     glVertex2f(centerX, centerY);
     float endAngle = startAngle + (totalProteine / total) * 360.0f;
     for (float angle = startAngle; angle <= endAngle; angle += 1.0f) {
@@ -498,9 +504,9 @@ void deseneazaPieChart() {
     glEnd();
     startAngle = endAngle;
 
-    // Draw carbs slice
+    // Desenează secțiunea pentru carbohidrați
     glBegin(GL_TRIANGLE_FAN);
-    glColor3f(0.0f, 1.0f, 0.0f); // Green for carbs
+    glColor3f(0.0f, 1.0f, 0.0f); // Verde pentru carbohidrați
     glVertex2f(centerX, centerY);
     endAngle = startAngle + (totalCarbohidrati / total) * 360.0f;
     for (float angle = startAngle; angle <= endAngle; angle += 1.0f) {
@@ -510,9 +516,9 @@ void deseneazaPieChart() {
     glEnd();
     startAngle = endAngle;
 
-    // Draw fiber slice
+    // Desenează secțiunea pentru fibre
     glBegin(GL_TRIANGLE_FAN);
-    glColor3f(0.0f, 0.0f, 1.0f); // Blue for fiber
+    glColor3f(0.0f, 0.0f, 1.0f); // Albastru pentru fibre
     glVertex2f(centerX, centerY);
     endAngle = startAngle + (totalFibre / total) * 360.0f;
     for (float angle = startAngle; angle <= endAngle; angle += 1.0f) {
@@ -521,7 +527,7 @@ void deseneazaPieChart() {
     }
     glEnd();
 
-    // Draw legend
+    // Desenează legenda
     glColor3f(0.0f, 0.0f, 0.0f);
     glRasterPos2f(-0.8f, 0.8f);
     char* title = "Distributia Nutritiilor";
@@ -534,7 +540,7 @@ void deseneazaPieChart() {
     float yPos = 0.6f;
     float yStep = 0.1f;
 
-    // Protein
+    // Proteine
     glColor3f(1.0f, 0.0f, 0.0f);
     glRasterPos2f(-0.8f, yPos);
     sprintf(buffer, "Proteine: %.1f%%", (totalProteine / total) * 100);
@@ -542,7 +548,7 @@ void deseneazaPieChart() {
         glutBitmapCharacter(GLUT_BITMAP_HELVETICA_12, buffer[i]);
     }
 
-    // Carbs
+    // Carbohidrați
     glColor3f(0.0f, 1.0f, 0.0f);
     glRasterPos2f(-0.8f, yPos - yStep);
     sprintf(buffer, "Carbohidrati: %.1f%%", (totalCarbohidrati / total) * 100);
@@ -550,7 +556,7 @@ void deseneazaPieChart() {
         glutBitmapCharacter(GLUT_BITMAP_HELVETICA_12, buffer[i]);
     }
 
-    // Fiber
+    // Fibre
     glColor3f(0.0f, 0.0f, 1.0f);
     glRasterPos2f(-0.8f, yPos - 2 * yStep);
     sprintf(buffer, "Fibre: %.1f%%", (totalFibre / total) * 100);
@@ -561,11 +567,11 @@ void deseneazaPieChart() {
     glFlush();
 }
 
-// Function to create a new window for pie chart
+// Funcție pentru crearea unei noi ferestre pentru graficul circular
 void creeazaFereastraPieChart() {
     glutInitWindowSize(800, 600);
-    glutInitWindowPosition(900, 50);  // Position it to the right of the main window
-    glutCreateWindow("Distributia Nutritiilor");
+    glutInitWindowPosition(900, 50);  // Poziționează la dreapta ferestrei principale
+    glutCreateWindow("Distribuția Nutrienților");
     glutDisplayFunc(deseneazaPieChart);
 }
 
@@ -595,27 +601,27 @@ int main(int argc, char** argv) {
     // Scrie informatiile in fisier
     scrieInformatiiMeseInFisier("date-de-iesire/rezultate_mese.txt", mese, numarMese, aliments, numarAliments);
 
-    // Prepare chart data
+    // Pregătește datele pentru grafic
     pregatesteDateChart(mese, numarMese, aliments, numarAliments);
 
-    // Calculate total nutrients for pie chart
+    // Calculează nutrienții totali pentru graficul circular
     calculeazaTotalNutritii(mese, numarMese, aliments, numarAliments);
 
-    // Initialize GLUT
+    // Inițializează GLUT
     glutInit(&argc, argv);
     
-    // Create main window for bar chart
+    // Creează fereastra principală pentru graficul cu bare
     glutInitWindowSize(800, 600);
     glutInitWindowPosition(50, 50);
     glutCreateWindow("Calorii per masa");
     glutDisplayFunc(displayWrapper);
     
-    // Create second window for pie chart
+    // Creează a doua fereastră pentru graficul circular
     creeazaFereastraPieChart();
     
     glutMainLoop();
 
-    // Cleanup
+    // Curăță memoria
     cleanup();
     return 0;
 } 
