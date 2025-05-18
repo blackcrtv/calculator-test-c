@@ -13,6 +13,10 @@
 #define MAX_ALIMENTE_PER_MASA 30
 #define MAX_CUVINTE_IGNORATE 20
 
+// Variabile globale necesare pentru display
+struct Aliment* aliments = NULL;  // Variabilă globală pentru alimente
+int numarAliments = 0;  // Variabilă globală pentru numărul de alimente
+
 struct InformatiiNutritive {
     float calorii;
     float carbohidrati;
@@ -380,7 +384,7 @@ void obtineCuloareMasa(struct EvaluareSanatate evaluare, float* r, float* g, flo
 }
 
 // Modifică funcția display pentru a include culorile bazate pe sănătate
-void display() {
+void display(struct Aliment* aliments, int numarAliments) {
     glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
@@ -433,6 +437,11 @@ void display() {
     }
 
     glFlush();
+}
+
+// Funcție wrapper pentru glutDisplayFunc
+void displayWrapper() {
+    display(aliments, numarAliments);
 }
 
 void cleanup() {
@@ -561,15 +570,19 @@ void creeazaFereastraPieChart() {
 }
 
 int main(int argc, char** argv) {
-    struct Aliment aliments[MAX_ALIMENTE];
-    int numarAliments = 0;
+    struct Aliment alimentsLocal[MAX_ALIMENTE];
+    int numarAlimentsLocal = 0;
     char mese[MAX_MESE][MAX_LUNGIME_NUME];
     int numarMese = 0;
 
     // Citeste alimentele
-    if (!citesteAlimente("date-de-intrare/nutrition.txt", aliments, &numarAliments)) {
+    if (!citesteAlimente("date-de-intrare/nutrition.txt", alimentsLocal, &numarAlimentsLocal)) {
         return 1;
     }
+
+    // Copiază datele în variabilele globale
+    aliments = alimentsLocal;
+    numarAliments = numarAlimentsLocal;
 
     // Citeste mesele
     if (!citesteMese("date-de-intrare/mese.txt", mese, &numarMese)) {
@@ -595,7 +608,7 @@ int main(int argc, char** argv) {
     glutInitWindowSize(800, 600);
     glutInitWindowPosition(50, 50);
     glutCreateWindow("Calorii per masa");
-    glutDisplayFunc(display);
+    glutDisplayFunc(displayWrapper);
     
     // Create second window for pie chart
     creeazaFereastraPieChart();
